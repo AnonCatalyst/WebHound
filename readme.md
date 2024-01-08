@@ -11,7 +11,7 @@ WebHound is a Python-powered command-line tool developed by AnonCatalyst that br
 - **Efficient Execution**: Utilizes multithreading to speed up the search process, providing results in a fraction of the time.
 - **User-Friendly Interface**: Simple and intuitive command-line interface for an effortless user experience.
 
->> ## Installation & Usage:
+> ## Installation & Usage:
 
 ``` git clone https://github.com/AnonCatalyst/WebHound && cd WebHound```
 
