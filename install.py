@@ -1,32 +1,52 @@
-import os
-import sys
 import subprocess
-
-# Assuming the main script is named webhound.py
-MAIN_SCRIPT = "webhound.py"
-VENV_DIR = ".webhound_venv"
+import sys
+import os
+import platform
 
 def install_dependencies():
-    subprocess.run([sys.executable, "-m", "pip", "install", "requests", "beautifulsoup4", "futures", "termcolor", "fake_useragent"])
+    try:
+        subprocess.run([sys.executable, '-m', 'pip', 'install', 'requests', 'beautifulsoup4', 'fake_useragent', 'tqdm', 'termcolor'])
+        print("Python dependencies installed successfully.")
+    except Exception as e:
+        print(f"Error installing Python dependencies: {e}")
 
-def create_venv():
-    subprocess.run([sys.executable, "-m", "venv", VENV_DIR])
+def install_system_dependencies():
+    system_name = platform.system().lower()
 
-def make_executable():
-    if sys.platform.startswith('win'):
-        os.system(f"copy {MAIN_SCRIPT} {MAIN_SCRIPT[:-3]}.exe")
+    if system_name == 'linux':
+        install_command = 'sudo apt-get install -y' if platform.linux_distribution()[0].lower() == 'debian' else 'sudo yum install -y'
+        subprocess.run([install_command, 'your_system_dependencies_here'])
+        print("System dependencies installed successfully.")
+    elif system_name == 'darwin':
+        try:
+            subprocess.run(['brew', 'install', 'your_system_dependencies_here'])
+            print("System dependencies installed successfully.")
+        except FileNotFoundError:
+            print("Homebrew not installed. Please install Homebrew and rerun the script.")
+    elif system_name == 'windows':
+        print("Windows support coming soon.")
+        # Add Windows-specific installation logic here
+    elif 'termux' in system_name:
+        try:
+            subprocess.run(['pkg', 'install', 'your_system_dependencies_here'])
+            print("Termux dependencies installed successfully.")
+        except FileNotFoundError:
+            print("Termux package manager not found. Please install Termux and rerun the script.")
     else:
-        os.system(f"chmod +x {MAIN_SCRIPT}")
+        print("Unsupported operating system. Please install required dependencies manually.")
 
-def display_completion_message():
-    print("WebHound is now installed!")
-    print(f"You can run it using {os.path.join(os.getcwd(), MAIN_SCRIPT)}")
+def clear_screen():
+    os.system('cls' if os.name == 'nt' else 'clear')
 
 def main():
-    create_venv()
+    clear_screen()
+    print("Welcome to WebHound's Installation\n")
+
     install_dependencies()
-    make_executable()
-    display_completion_message()
+    install_system_dependencies()
+
+    clear_screen()
+    print("Installation complete. You can now run your webhound.py.")
 
 if __name__ == "__main__":
     main()
