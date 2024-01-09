@@ -14,9 +14,13 @@ def install_system_dependencies():
     system_name = platform.system().lower()
 
     if system_name == 'linux':
-        install_command = 'sudo apt-get install -y' if platform.linux_distribution()[0].lower() == 'debian' else 'sudo yum install -y'
-        subprocess.run([install_command, 'your_system_dependencies_here'])
-        print("System dependencies installed successfully.")
+        try:
+            distribution = platform.linux_distribution()
+            install_command = 'sudo apt-get install -y' if distribution[0].lower() == 'debian' else 'sudo yum install -y'
+            subprocess.run([install_command, 'your_system_dependencies_here'])
+            print("System dependencies installed successfully.")
+        except AttributeError:
+            print("Unsupported Linux distribution. Please install required dependencies manually.")
     elif system_name == 'darwin':
         try:
             subprocess.run(['brew', 'install', 'your_system_dependencies_here'])
@@ -46,7 +50,7 @@ def main():
     install_system_dependencies()
 
     clear_screen()
-    print("Installation complete. You can now run your webhound.py.")
+    print("Installation complete. You can now run -> python3 webhound.py")
 
 if __name__ == "__main__":
     main()
