@@ -1,15 +1,12 @@
+import os
 import requests
 from bs4 import BeautifulSoup
 from concurrent.futures import ThreadPoolExecutor
-import threading
 import time
 from termcolor import colored
 from urllib.parse import quote
 from fake_useragent import UserAgent
 from tqdm import tqdm
-import subprocess
-import sys
-import platform
 
 SEARCH_ENGINES = {
     "Google": "https://www.google.com/search?q=",
@@ -94,10 +91,31 @@ class Scraper:
             except Exception as e:
                 print(colored(f"An error occurred while processing a search result: {e}", "red"))
 
-        # Move this line outside the loop
         print(colored(f"🔢 Total Results from {engine}: {result_count}\n", "cyan"))
 
+def print_ascii_banner():
+    """Print an artistic ASCII banner."""
+    banner = """
+    /**\ __  WEB-SEARCH  ______________ ©
+    * ╔────────────────────────────────╗
+    * │░█░█░█▀▀░█▀▄░█░█░█▀█░█░█░█▀█░█▀▄│
+    * │░█▄█░█▀▀░█▀▄░█▀█░█░█░█░█░█│
+    * │░▀░▀░▀▀▀░▀▀░░▀░▀░▀▀▀░▀▀▀░▀░▀░▀▀░│
+    * ╚────────────────────────────────╝
+    */ •• •• Information-Gathering •• ••
+
+    | ° ᴰᵉᵛᵉˡᵒᵖᵉʳ ⠘ ᴬⁿᵒⁿᶜᵃᵗᵃˡʸˢᵗ ✓
+    | ° ᴳⁱᵗᴴᵘᵇ ⠘ ᵍⁱᵗʰᵘᵇ‧ᶜᵒᵐ/ᴬⁿᵒⁿᶜᵃᵗᵃˡʸˢᵗ ✓
+       •   •   •    ______
+      ᴴᵃᵖᵖʸ ᴼˢⁱⁿᵗⁱⁿᵍ! 🌐🔍 ⠘⁾
+    """
+    print(colored(banner, color="magenta"))
+
 if __name__ == "__main__":
+    # Clear screen based on the operating system
+    os.system('cls' if os.name == 'nt' else 'clear')
+    
+    print_ascii_banner()
     query = input(colored("🔍 Enter your query: ", "cyan"))
     scraper = Scraper()
 
@@ -107,5 +125,4 @@ if __name__ == "__main__":
         all_results.extend(results)
 
     scraper.print_results(all_results, "All Engines")
-
-    
+                                        
