@@ -7,7 +7,7 @@ WebHound is a Python-powered command-line tool developed by AnonCatalyst that br
 ## Coming Next:
 
 - **Social Platform Detection**: 2 types of social plation detection methods.
-- **Query in Title/URL**: detect your query in titles or urls.
+- **Query in Title/URL**: Detect your query in titles or urls.
 
 ## Features:
 
@@ -15,6 +15,8 @@ WebHound is a Python-powered command-line tool developed by AnonCatalyst that br
 - **Colorful Output**: Results are presented in a visually appealing manner with highlighted titles, URLs, and descriptions for quick and easy reading.
 - **Efficient Execution**: Utilizes multithreading to speed up the search process, providing results in a fraction of the time.
 - **User-Friendly Interface**: Simple and intuitive command-line interface for an effortless user experience.
+- - **All Platform Support:** Enjoy WebHound on anything! debian,arch,windows,mac,Android.
+
 
  ## Installation & Usage:
 
