@@ -4,6 +4,11 @@
 
 WebHound is a Python-powered command-line tool developed by AnonCatalyst that brings efficiency and style to your web searches. Seamlessly query Google, DuckDuckGo, and Bing, and enjoy organized, highlighted results—all from the comfort of your terminal. Let WebHound elevate your search experience with a touch of color and clarity! 🌐🔍✨
 
+## Coming Next:
+
+- **Social Platform Detection**: 2 types of social plation detection methods.
+- **Query in Title/URL**: detect your query in titles or urls.
+
 ## Features:
 
 - **Multi-Engine Search**: Conduct searches across popular engines, including Google, DuckDuckGo, Bing and 7 more simultaneously.
