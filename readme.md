@@ -1,6 +1,6 @@
 # WebHound 🚀
 
-> **NOTE**: `A big update is being looked into for webhound`
+> **NOTE**: `Future updates are expected`
 
 ![WebHound Logo](img/webhound.jpeg)
 
