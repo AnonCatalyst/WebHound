@@ -1,6 +1,8 @@
 # WebHound 🚀
 
-> **NOTE**: This project will likely be the 4th of 5 tools for the CT Window of Odinova`Future updates are expected soon!`
+> **UP-COMMING**: An update is currently under development!
+
+> This project will likely be the 4th of 5 tools for the CT Window of Odinova
 
 ![WebHound Logo](img/webhound.jpeg)
 
