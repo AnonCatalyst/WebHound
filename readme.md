@@ -1,6 +1,6 @@
 # WebHound 🚀
 
-> **UP-COMMING**: An update is currently under development, WebHound will now be a GUI but you can still access the current release!
+> **UP-COMMING**: An update is currently under development, WebHound will now be a GUI but you can still access the current release! The client version will also be improved but that update will come after the WebHound GUI.
 
 > This project will likely be the 4th of 5 tools for the CT Window of Odinova
 
