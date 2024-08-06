@@ -14,13 +14,9 @@ from detect import DetectionHandler
 SEARCH_ENGINES = {
     "Google": "https://www.google.com/search?q=",
     "DuckDuckGo": "https://duckduckgo.com/html/?q=",
-    "Bing": "https://www.bing.com/search?q=",
-    "Yahoo": "https://search.yahoo.com/search?p=",
-    "Ask": "https://www.ask.com/web?q=",
-    "AOL": "https://search.aol.com/aol/search?q=",
-    "Yandex": "https://www.yandex.com/search/?text=",
     "StartPage": "https://www.startpage.com/do/dsearch?query=",
-    "Baidu": "https://www.baidu.com/s?wd=",
+    "Bing": "https://www.bing.com/search?q=",
+    "Ask": "https://www.ask.com/web?q=",
 }
 
 class WebScraper:
@@ -85,6 +81,11 @@ class WebScraper:
         detection_result = self.detection_handler.enhanced_detection(page_content, query, types_keywords)
         return detection_result
 
+    def save_page_contents(self, engine, index, page_content):
+        with open('page-contents.log', 'a', encoding='utf-8') as f:
+            f.write(f"=== Page Content from {engine} - Page {index} ===\n")
+            f.write(page_content.prettify() + "\n")
+            f.write("="*50 + "\n")
 
     def print_results(self, results, engine, query):
         if not results:
@@ -97,7 +98,14 @@ class WebScraper:
         result_count = 0
 
         try:
-            for page_content in results:
+            for index, page_content in enumerate(results):
+                if page_content is None:
+                    self.logger.warning("Received NoneType page_content, skipping.")
+                    continue
+
+                # Save HTML content to a file
+                self.save_page_contents(engine, index, page_content)
+
                 for item in page_content.select("div.tF2Cxc, div.result, li.b_algo"):
                     title = item.select_one("h2, h3")
                     link = item.find("a")["href"]
@@ -138,9 +146,41 @@ class WebScraper:
         except Exception as e:
             self.logger.error(f"An error occurred while processing a search result: {e}")
 
-
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+    # Set up logging configuration
+    logger = logging.getLogger()
+    logger.setLevel(logging.DEBUG)
+    
+    # Create a file handler for debug logs
+    file_handler = logging.FileHandler('debug.log')
+    file_handler.setLevel(logging.DEBUG)
+    file_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+    
+    # Create a stream handler for console logs
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.INFO)  # Only show info and higher level logs on console
+    console_handler.setFormatter(logging.Formatter('%(levelname)s: %(message)s'))
+    
+    logger.addHandler(file_handler)
+    logger.addHandler(console_handler)
+
+    # Create a file handler for page contents
+    page_contents_handler = logging.FileHandler('page-contents.log', mode='w', encoding='utf-8')
+    page_contents_handler.setLevel(logging.DEBUG)
+    page_contents_handler.setFormatter(logging.Formatter('%(message)s'))
+    logger.addHandler(page_contents_handler)
+
+        # Print the banner
+    banner = """
+    ─────█─▄▀█──█▀▄─█─────
+    ────▐▌──────────▐▌────   WebHound:🐕
+    ────█▌▀▄──▄▄──▄▀▐█────  Your trusty digital hound
+    ───▐██──▀▀──▀▀──██▌───  sniffing out data across the web!💻
+    ──▄████▄──▐▌──▄████▄──
+   ~~~~~~~~~~~~~~~~~~~~~~~~
+ """
+    print(colored(banner, 'cyan'))
+
     query = input(colored("🔍 Enter your query: ", "cyan"))
     scraper = WebScraper()
 
@@ -158,4 +198,3 @@ if __name__ == "__main__":
     # Print results from each engine
     if all_results:
         scraper.print_results(all_results, "All Engines", query)
-
