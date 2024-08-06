@@ -2,11 +2,14 @@ import requests
 from bs4 import BeautifulSoup
 from termcolor import colored
 from urllib.parse import quote
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from fake_useragent import UserAgent
 from tqdm import tqdm
+import random
 import time
 import logging
+import json
+from detect import DetectionHandler  
 
 SEARCH_ENGINES = {
     "Google": "https://www.google.com/search?q=",
@@ -18,7 +21,6 @@ SEARCH_ENGINES = {
     "Yandex": "https://www.yandex.com/search/?text=",
     "StartPage": "https://www.startpage.com/do/dsearch?query=",
     "Baidu": "https://www.baidu.com/s?wd=",
-    # Add more search engines as needed
 }
 
 class WebScraper:
@@ -26,46 +28,65 @@ class WebScraper:
         self.session = requests.Session()
         self.ua = UserAgent()
         self.logger = logging.getLogger(__name__)
+        self.detection_handler = DetectionHandler('social_platforms.json')  # Initialize DetectionHandler
 
     def make_request(self, url, retry_count=3):
         headers = {"User-Agent": self.ua.random}
-        for _ in range(retry_count):
+        for attempt in range(retry_count):
             try:
                 response = self.session.get(url, headers=headers, timeout=10)
                 response.raise_for_status()
                 return BeautifulSoup(response.text, "html.parser")
             except requests.exceptions.RequestException as e:
                 self.logger.error(f"Failed to make a request to {url}: {e}")
-                if retry_count > 0:
-                    self.logger.warning(f"Retrying... {retry_count} attempts remaining.")
-                    retry_count -= 1
-                    time.sleep(2)  # Introduce delay before retry
+                if attempt < retry_count - 1:
+                    self.logger.warning(f"Retrying... {retry_count - attempt - 1} attempts remaining.")
+                    time.sleep(random.uniform(2, 5))  # Introduce random delay before retry
                 else:
                     self.logger.warning("Maximum retries reached. Moving on to the next step.")
                     return None
 
     def execute_search(self, query, engine):
         url = SEARCH_ENGINES.get(engine)
-        if url:
-            self.logger.info(f"Searching on {engine}...")
-            try:
-                search_url = f"{url}{quote(query)}"
-                with ThreadPoolExecutor(max_workers=5) as executor:
-                    search_urls = [f"{search_url}&start={i}" for i in range(0, 101, 10)]
-                    results = list(tqdm(executor.map(lambda u: self.make_request(u, retry_count=3), search_urls), total=len(search_urls), desc="Progress"))
+        if not url:
+            self.logger.warning(f"Search engine '{engine}' is not supported.")
+            return []
 
-                if results and all(result is not None for result in results):
-                    self.logger.info(f"Search on {engine} completed successfully!")
-                    return results
-                else:
-                    self.logger.warning(f"No results found on {engine}. Please try another search.")
-                    return []
+        self.logger.info(f"Searching on {engine}...")
+        try:
+            search_url = f"{url}{quote(query)}"
+            search_urls = [f"{search_url}&start={i}" for i in range(0, 101, 10)]
+            
+            with ThreadPoolExecutor(max_workers=5) as executor:
+                futures = [executor.submit(self.make_request, u) for u in search_urls]
+                results = []
+                for future in tqdm(as_completed(futures), total=len(futures), desc=f"Progress ({engine})"):
+                    result = future.result()
+                    if result:
+                        results.append(result)
+                    time.sleep(random.uniform(1, 3))  # Introduce random delay to mimic human behavior
 
-            except requests.exceptions.RequestException as e:
-                self.logger.error(f"An error occurred during the search on {engine}: {e}")
+            if results:
+                self.logger.info(f"Search on {engine} completed successfully!")
+                return results
+            else:
+                self.logger.warning(f"No results found on {engine}.")
                 return []
 
-    def print_results(self, results, engine):
+        except requests.exceptions.RequestException as e:
+            self.logger.error(f"An error occurred during the search on {engine}: {e}")
+            return []
+
+    def analyze_content(self, page_content, query):
+        types_keywords = {
+            "forum": ["forum", "board", "community"],
+            "news": ["news", "breaking", "headline"]
+        }
+        detection_result = self.detection_handler.enhanced_detection(page_content, query, types_keywords)
+        return detection_result
+
+
+    def print_results(self, results, engine, query):
         if not results:
             self.logger.warning(f"No results from {engine}")
             return
@@ -92,25 +113,49 @@ class WebScraper:
                     link_text = link if link else "Link not available"
                     description_text = description.text.strip() if description else "Description not available"
 
-                    self.logger.info(f"\n{'🔹'*10} Result {result_count} {'🔹'*10}\n"
-                                     f"{'📖 Title:':<15} {colored(title_text, 'yellow')}\n"
-                                     f"{'🌐 URL:':<15} {colored(link_text, 'cyan')}\n"
-                                     f"{'📝 Description:':<15} {colored(description_text, 'green')}\n"
-                                     f"{'🔹'*40}\n")
+                    page_text = item.text.strip()
+                    detection_result = self.analyze_content(page_text, query)
+
+                    # Only print details if they meet the criteria
+                    result_details = f"\n{'🔹'*10} Result {result_count} {'🔹'*10}\n"
+                    result_details += f"{'📖 Title:':<15} {colored(title_text, 'yellow')}\n"
+                    result_details += f"{'🌐 URL:':<15} {colored(link_text, 'cyan')}\n"
+                    result_details += f"{'📝 Description:':<15} {colored(description_text, 'green')}\n"
+
+                    if detection_result['is_forum']:
+                        result_details += f"{'Forum:':<15} {colored(detection_result['is_forum'], 'magenta')}\n"
+                    if detection_result['is_news']:
+                        result_details += f"{'News:':<15} {colored(detection_result['is_news'], 'magenta')}\n"
+                    if detection_result['query_mentions'] > 1:
+                        result_details += f"{'Query Mentions:':<15} {colored(detection_result['query_mentions'], 'magenta')}\n"
+                    if detection_result['social_platforms_detected']:
+                        result_details += f"{'Social Platforms:':<15} {colored(', '.join(detection_result['social_platforms_detected']), 'magenta')}\n"
+
+                    result_details += f"{'🔹'*40}\n"
+
+                    self.logger.info(result_details)
 
         except Exception as e:
             self.logger.error(f"An error occurred while processing a search result: {e}")
+
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
     query = input(colored("🔍 Enter your query: ", "cyan"))
     scraper = WebScraper()
 
-    all_results = []
-    for engine in SEARCH_ENGINES:
-        result = scraper.execute_search(query, engine)
-        if result:
-            all_results.extend(result)
-    
+    all_results = []  # List to accumulate all search results
+
+    # Execute searches in parallel
+    with ThreadPoolExecutor(max_workers=len(SEARCH_ENGINES)) as executor:
+        futures = {executor.submit(scraper.execute_search, query, engine): engine for engine in SEARCH_ENGINES}
+        for future in as_completed(futures):
+            engine = futures[future]
+            result = future.result()
+            if result:
+                all_results.extend(result)  # Accumulate results from all engines
+
+    # Print results from each engine
     if all_results:
-        scraper.print_results(all_results, "All Engines")
+        scraper.print_results(all_results, "All Engines", query)
+
