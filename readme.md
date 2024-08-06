@@ -6,7 +6,7 @@
 
 ![WebHound Logo](img/webhound.jpeg)
 
-WebHound is your ultimate Python-powered command-line companion, designed to turbocharge your web searching experience with both efficiency and pizzazz! Imagine a digital sleuth with a nose for data, sniffing through the vast expanse of the internet, sniffing out valuable insights from a diverse array of search engines. Whether you're diving into Google’s treasure trove, peering through DuckDuckGo’s privacy lens, or unraveling Bing's web, WebHound has got you covered.
+**WebHound** is your ultimate Python-powered command-line companion, designed to turbocharge your web searching experience with both efficiency and pizzazz! Imagine a digital sleuth with a nose for data, sniffing through the vast expanse of the internet, sniffing out valuable insights from a diverse array of search engines. Whether you're diving into Google’s treasure trove, peering through DuckDuckGo’s privacy lens, or unraveling Bing's web, WebHound has got you covered.
 
 But that’s not all—this tool is more than just a search engine aggregator. It’s a seasoned OSINT detective with the knack for uncovering social platforms, forums, and news sites. With WebHound, you can effortlessly track down mentions of your query across titles and URLs, giving you a front-row seat to the digital chatter happening around your topic of interest.
 
