@@ -51,6 +51,6 @@ So gear up, and let WebHound transform your terminal into a dynamic data-hunting
 
 ``` python3 webhound.py```
 
-## Run in a virtual envirement
+## Run in a virtual enviroment
 
 ``` python3 webhound-venv.py```
