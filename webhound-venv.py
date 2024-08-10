@@ -77,11 +77,11 @@ def run_script(venv_path, script_name):
     if os.name == 'nt':  # For Windows
         python_executable = os.path.join(venv_path, 'Scripts', 'python.exe')
 
-    tqdm.write(f"Running {script_name}...", end="")
+    tqdm.write(f"{script_name}...", end="")
     try:
         # Added debugging output to track script execution
         subprocess.check_call([python_executable, script_name])
-        tqdm.write(" Script executed successfully.")
+        tqdm.write(" executed successfully!")
     except subprocess.CalledProcessError as e:
         tqdm.write(f" Failed to run script. Error: {e}")
         logging.error(f"Failed to run {script_name}. Error: {e}")
