@@ -50,3 +50,7 @@ So gear up, and let WebHound transform your terminal into a dynamic data-hunting
 ``` python3 install.py```
 
 ``` python3 webhound.py```
+
+## Run in a virtual envirement
+
+``` python3 webhound-venv.py```
