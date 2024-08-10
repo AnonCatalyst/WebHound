@@ -12,7 +12,7 @@ def create_virtualenv(venv_path):
     """Create a virtual environment if it doesn't already exist."""
     if not os.path.exists(venv_path):
         logging.info("Creating virtual environment...")
-        subprocess.check_call([sys.executable, '-m', 'webhound-venv', venv_path])
+        subprocess.check_call([sys.executable, '-m', 'venv', venv_path])
         logging.info("Virtual environment created.")
     else:
         logging.info("Virtual environment already exists.")
