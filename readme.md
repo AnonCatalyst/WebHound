@@ -20,7 +20,6 @@ So gear up, and let WebHound transform your terminal into a dynamic data-hunting
 - **DuckDuckGo**
 - **StartPage**
 - **Bing**
-- **Ask**
 
 ## Detection Methods:
 
