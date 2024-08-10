@@ -5,7 +5,7 @@ import platform
 
 def install_dependencies():
     try:
-        subprocess.run([sys.executable, '-m', 'pip', 'install', 'requests', 'beautifulsoup4', 'fake_useragent', 'tqdm', 'termcolor'])
+        subprocess.run([sys.executable, '-m', 'pip', 'install', 'requests', 'beautifulsoup4', 'fake_useragent', 'tqdm', 'termcolor', '--break-system-packages'])
         print("Python dependencies installed successfully.")
     except Exception as e:
         print(f"Error installing Python dependencies: {e}")
@@ -16,14 +16,14 @@ def install_system_dependencies():
     if system_name == 'linux':
         try:
             distribution = platform.linux_distribution()
-            install_command = 'sudo apt-get install -y' if distribution[0].lower() == 'debian' else 'sudo yum install -y'
-            subprocess.run([install_command, 'your_system_dependencies_here'])
+            install_command = 'sudo apt-get install -y' if distribution[0].lower() == 'debian' else 'sudo yum install -y' if distribution[0].lower() == 'arch' else 'sudo pacman install -S'
+            subprocess.run([install_command, 'python-scikit-learn python-tldextract'])
             print("System dependencies installed successfully.")
         except AttributeError:
             print("Unsupported Linux distribution. Please install required dependencies manually.")
     elif system_name == 'darwin':
         try:
-            subprocess.run(['brew', 'install', 'your_system_dependencies_here'])
+            subprocess.run(['brew', 'install', 'python-scikit-learn python-tldextract'])
             print("System dependencies installed successfully.")
         except FileNotFoundError:
             print("Homebrew not installed. Please install Homebrew and rerun the script.")

@@ -1,3 +1,4 @@
+
 import requests
 from bs4 import BeautifulSoup
 from termcolor import colored
@@ -9,14 +10,14 @@ import random
 import time
 import logging
 import json
-from detect import DetectionHandler  
+from detect import DetectionHandler
+from typing import List, Dict, Optional
 
 SEARCH_ENGINES = {
     "Google": "https://www.google.com/search?q=",
     "DuckDuckGo": "https://duckduckgo.com/html/?q=",
     "StartPage": "https://www.startpage.com/do/dsearch?query=",
     "Bing": "https://www.bing.com/search?q=",
-    "Ask": "https://www.ask.com/web?q=",
 }
 
 class WebScraper:
@@ -26,7 +27,7 @@ class WebScraper:
         self.logger = logging.getLogger(__name__)
         self.detection_handler = DetectionHandler('social_platforms.json')  # Initialize DetectionHandler
 
-    def make_request(self, url, retry_count=3):
+    def make_request(self, url: str, retry_count: int = 3) -> Optional[BeautifulSoup]:
         headers = {"User-Agent": self.ua.random}
         for attempt in range(retry_count):
             try:
@@ -37,12 +38,32 @@ class WebScraper:
                 self.logger.error(f"Failed to make a request to {url}: {e}")
                 if attempt < retry_count - 1:
                     self.logger.warning(f"Retrying... {retry_count - attempt - 1} attempts remaining.")
-                    time.sleep(random.uniform(2, 5))  # Introduce random delay before retry
+                    time.sleep(random.uniform(1, 3))  # Shorter random delay before retry
                 else:
                     self.logger.warning("Maximum retries reached. Moving on to the next step.")
                     return None
 
-    def execute_search(self, query, engine):
+    def execute_search(self, query: str, engines: List[str], date_range: Optional[str], language: Optional[str], country: Optional[str]) -> Dict[str, List[BeautifulSoup]]:
+        results = {}
+        
+        # Search all engines at the same time
+        with ThreadPoolExecutor(max_workers=len(engines)) as executor:
+            futures = {
+                executor.submit(self.search_engine, engine, query, date_range, language, country): engine
+                for engine in engines
+            }
+            
+            for future in tqdm(as_completed(futures), total=len(futures), desc="Processing Search Engines"):
+                engine = futures[future]
+                engine_results = future.result()
+                if engine_results:
+                    results[engine] = engine_results
+                else:
+                    self.logger.warning(f"No results from {engine}.")
+        
+        return results
+
+    def search_engine(self, engine: str, query: str, date_range: Optional[str], language: Optional[str], country: Optional[str]) -> List[BeautifulSoup]:
         url = SEARCH_ENGINES.get(engine)
         if not url:
             self.logger.warning(f"Search engine '{engine}' is not supported.")
@@ -53,14 +74,14 @@ class WebScraper:
             search_url = f"{url}{quote(query)}"
             search_urls = [f"{search_url}&start={i}" for i in range(0, 101, 10)]
             
-            with ThreadPoolExecutor(max_workers=5) as executor:
+            with ThreadPoolExecutor(max_workers=10) as executor:
                 futures = [executor.submit(self.make_request, u) for u in search_urls]
                 results = []
                 for future in tqdm(as_completed(futures), total=len(futures), desc=f"Progress ({engine})"):
                     result = future.result()
                     if result:
                         results.append(result)
-                    time.sleep(random.uniform(1, 3))  # Introduce random delay to mimic human behavior
+                    time.sleep(random.uniform(0.5, 1.5))  # Shorter random delay to speed up processing
 
             if results:
                 self.logger.info(f"Search on {engine} completed successfully!")
@@ -73,32 +94,35 @@ class WebScraper:
             self.logger.error(f"An error occurred during the search on {engine}: {e}")
             return []
 
-    def analyze_content(self, page_content, query):
+    def analyze_content(self, page_content: BeautifulSoup, query: str) -> Dict[str, any]:
         types_keywords = {
             "forum": ["forum", "board", "community"],
             "news": ["news", "breaking", "headline"]
         }
-        detection_result = self.detection_handler.enhanced_detection(page_content, query, types_keywords)
+        text_content = page_content.get_text()
+        detection_result = self.detection_handler.enhanced_detection(text_content, query, types_keywords)
         return detection_result
 
-    def save_page_contents(self, engine, index, page_content):
+    def save_page_contents(self, engine: str, index: int, page_content: BeautifulSoup):
         with open('page-contents.log', 'a', encoding='utf-8') as f:
             f.write(f"=== Page Content from {engine} - Page {index} ===\n")
             f.write(page_content.prettify() + "\n")
             f.write("="*50 + "\n")
 
-    def print_results(self, results, engine, query):
+    def print_results(self, results: Dict[str, List[BeautifulSoup]], query: str):
         if not results:
-            self.logger.warning(f"No results from {engine}")
+            self.logger.warning("No results found.")
             return
 
-        self.logger.info(f"\n{'🔍'*10} Results from {engine} {'🔍'*10}\n")
+        self.logger.info(f"\n{'🔍'*10} Search Results {'🔍'*10}\n")
 
-        visited_links = set()
-        result_count = 0
+        for engine, pages in results.items():
+            visited_links = set()
+            result_count = 0
 
-        try:
-            for index, page_content in enumerate(results):
+            self.logger.info(f"\nResults from {engine}:\n")
+
+            for index, page_content in enumerate(pages):
                 if page_content is None:
                     self.logger.warning("Received NoneType page_content, skipping.")
                     continue
@@ -122,7 +146,7 @@ class WebScraper:
                     description_text = description.text.strip() if description else "Description not available"
 
                     page_text = item.text.strip()
-                    detection_result = self.analyze_content(page_text, query)
+                    detection_result = self.analyze_content(page_content, query)
 
                     # Only print details if they meet the criteria
                     result_details = f"\n{'🔹'*10} Result {result_count} {'🔹'*10}\n"
@@ -142,9 +166,6 @@ class WebScraper:
                     result_details += f"{'🔹'*40}\n"
 
                     self.logger.info(result_details)
-
-        except Exception as e:
-            self.logger.error(f"An error occurred while processing a search result: {e}")
 
 if __name__ == "__main__":
     # Set up logging configuration
@@ -170,7 +191,6 @@ if __name__ == "__main__":
     page_contents_handler.setFormatter(logging.Formatter('%(message)s'))
     logger.addHandler(page_contents_handler)
 
-        # Print the banner
     banner = """
     ─────█─▄▀█──█▀▄─█─────
     ────▐▌──────────▐▌────   WebHound:🐕
@@ -182,19 +202,20 @@ if __name__ == "__main__":
     print(colored(banner, 'cyan'))
 
     query = input(colored("🔍 Enter your query: ", "cyan"))
+
+    engines_input = input(colored("Enter search engines separated by commas (e.g., Google, Bing, StartPage, DuckDuckGo) or press Enter to use all: ", "cyan"))
+    if not engines_input.strip():
+        engines = list(SEARCH_ENGINES.keys())  # Use all engines if no input is provided
+    else:
+        engines = [engine.strip() for engine in engines_input.split(',')]
+
+    date_range = input(colored("Enter date range (optional, e.g., 'past 24 hours'): ", "cyan"))
+    language = input(colored("Enter language code (optional, e.g., 'en'): ", "cyan"))
+    country = input(colored("Enter country code (optional, e.g., 'US'): ", "cyan"))
+
     scraper = WebScraper()
 
-    all_results = []  # List to accumulate all search results
+    all_results = scraper.execute_search(query, engines, date_range, language, country)
 
-    # Execute searches in parallel
-    with ThreadPoolExecutor(max_workers=len(SEARCH_ENGINES)) as executor:
-        futures = {executor.submit(scraper.execute_search, query, engine): engine for engine in SEARCH_ENGINES}
-        for future in as_completed(futures):
-            engine = futures[future]
-            result = future.result()
-            if result:
-                all_results.extend(result)  # Accumulate results from all engines
-
-    # Print results from each engine
     if all_results:
-        scraper.print_results(all_results, "All Engines", query)
+        scraper.print_results(all_results, query)
