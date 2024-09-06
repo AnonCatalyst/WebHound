@@ -6,7 +6,7 @@ import platform
 def install_python_dependencies():
     try:
         # Install Python packages
-        subprocess.run([sys.executable, '-m', 'pip', 'install', 'requests', 'beautifulsoup4', 'fake_useragent', 'tqdm', 'termcolor', '--break-system-packages'], check=True)
+        subprocess.run([sys.executable, '-m', 'pip', 'spacy', 'furl', 'install', 'requests', 'beautifulsoup4', 'fake_useragent', 'tqdm', 'termcolor', '--break-system-packages'], check=True)
         print("Python dependencies installed successfully.")
     except subprocess.CalledProcessError as e:
         print(f"Error installing Python dependencies: {e}")
